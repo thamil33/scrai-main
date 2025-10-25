@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScrAI Admin</title>
+    <style>
+        body { font-family: sans-serif; }
+        #world {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            border: 1px solid black;
+        }
+        .agent {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            border-radius: 50%;
+        }
+        #memories {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ScrAI Admin</h1>
+    <div id="world"></div>
+    <h2>Latest Memories</h2>
+    <ul id="memories"></ul>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('/api/dashboard');
+            const data = await response.json();
+
+            const world = document.getElementById('world');
+            world.innerHTML = '';
+            data.agents.forEach(agent => {
+                const agentDiv = document.createElement('div');
+                agentDiv.className = 'agent';
+                const [x, y] = agent.position.split(',');
+                agentDiv.style.left = `${parseInt(x) * 10}px`;
+                agentDiv.style.top = `${parseInt(y) * 10}px`;
+                world.appendChild(agentDiv);
+            });
+
+            const memoriesList = document.getElementById('memories');
+            memoriesList.innerHTML = '';
+            data.memories.forEach(memory => {
+                const li = document.createElement('li');
+                li.textContent = `[${memory.timestamp}] Agent ${memory.agent_id}: ${memory.content}`;
+                memoriesList.appendChild(li);
+            });
+        }
+
+        setInterval(fetchData, 2000);
+        fetchData();
+    </script>
+</body>
+</html>
