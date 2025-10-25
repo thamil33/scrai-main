@@ -30,7 +30,7 @@ class WorldStateSystem:
             action_event = ActionEvent.model_validate(event_data)
             logger.info("Processing ActionEvent", event_id=action_event.event_id)
 
-            db: Session = self.session_factory()
+            db: Session = next(self.session_factory())
             try:
                 # Find the agent
                 agent = db.query(Agent).filter(Agent.id == action_event.entity_id).first()

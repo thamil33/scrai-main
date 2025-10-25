@@ -1,5 +1,18 @@
 # Change Log
 
+## [0.3.0] - 2025-10-25
+
+### Added
+- **Simulation Reset Endpoint:** Implemented an `/api/simulation/reset` endpoint to clear all database tables (`agents`, `episodic_memories`, `world_objects`) and re-initialize the simulation to a clean state.
+- **Frontend Reset Button:** Added a "Reset Simulation" button to the admin dashboard for easy access to the reset functionality.
+
+### Fixed
+- **API Serialization:** Resolved a `500 Internal Server Error` on the `/api/dashboard` endpoint by creating Pydantic schemas for `Agent` and `EpisodicMemory` models, ensuring proper JSON serialization of SQLAlchemy objects.
+- **Event Bus Consumption:** Fixed a critical `AttributeError` in the `MemoryConsolidator` by refactoring its `run` method to be asynchronous and correctly use the `EventBus.subscribe` method to consume events from the `world_state_committed_events` stream.
+- **Database Session Handling:** Corrected an `AttributeError: 'generator' object has no attribute 'query'` in the `WorldStateSystem` by properly consuming the session generator using `next()`, ensuring a valid database session is used.
+- **Agent Behavior Loop:** Addressed the agent's repetitive behavior by enhancing the reasoning prompt in `CognitiveAgent` to encourage exploration and prevent it from getting stuck in a logic loop.
+- **Code Cleanup:** Removed unnecessary and confusing commented-out code related to old API key handling.
+
 ## [0.2.0] - 2025-10-25
 
 ### Added

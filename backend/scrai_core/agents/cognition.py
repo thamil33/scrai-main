@@ -10,10 +10,7 @@ from scrai_core.core.persistence import get_session
 from sentence_transformers import SentenceTransformer
 from scrai_core.world.models import WorldObject
 import uuid
-
-# Ensure OPENAI_API_KEY is set in your environment
-# from dotenv import load_dotenv
-# load_dotenv()
+import random
 
 class ProtoAgentPublisher:
     """
@@ -148,6 +145,10 @@ class CognitiveAgent:
         
         objects_prompt = "\n".join([f"- Object ID: {obj.id}, Type: {obj.object_type}, Position: {obj.position}" for obj in state["nearby_objects"]])
         
+        # Generate a random example position to avoid biasing the LLM
+        random_x = random.randint(1, 50)
+        random_y = random.randint(1, 50)
+        
         prompt = f"""
         You are Agent {state['agent_model'].name}.
         Your current position is {state['agent_model'].position}.
@@ -155,9 +156,9 @@ class CognitiveAgent:
         Nearby objects are:
         {objects_prompt}
         
-        What is your next logical action? Your response must be a JSON object
-        representing an ActionEvent. You can either "move" or "interact_with_object".
-        Example for moving: {{"action_type": "move", "payload": {{"new_position": "20,20"}}}}
+        What is your next logical action? Consider your memories, but also prioritize exploring new areas if you seem to be stuck in a loop. Your response must be a JSON object representing an ActionEvent. You can either "move" or "interact_with_object".
+        
+        Example for moving: {{"action_type": "move", "payload": {{"new_position": "{random_x},{random_y}"}}}}
         Example for interacting: {{"action_type": "interact_with_object", "payload": {{"object_id": "some_object_id"}}}}
         """
         

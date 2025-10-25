@@ -1,3 +1,4 @@
+import asyncio
 import time
 from typing import List
 from scrai_core.core.persistence import get_session
@@ -16,6 +17,9 @@ class MemoryConsolidator:
         self.buffer_threshold = buffer_threshold
         self.event_buffer: List[WorldStateCommittedEvent] = []
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.stream_name = "world_state_committed_events"
+        self.consumer_group = "memory_consolidator_group"
+        self.consumer_name = "memory_consolidator_1"
 
     def _summarize_event(self, event: WorldStateCommittedEvent) -> str:
         """
@@ -55,25 +59,34 @@ class MemoryConsolidator:
         self.event_buffer.clear()
         print("Buffer processed and cleared.")
 
-    def run(self):
+    async def run(self):
         """
         Main loop to consume events and trigger consolidation.
         """
         print("Memory Consolidator worker started...")
-        while True:
-            events = self.event_bus.consume_world_state_events()
-            if events:
-                for event in events:
-                    self.event_buffer.append(event)
-            
-            if len(self.event_buffer) >= self.buffer_threshold:
-                self._process_buffer()
-            
-            time.sleep(1) # Prevent busy-waiting
+        await self.event_bus.connect()
+        try:
+            async for event_data in self.event_bus.subscribe(
+                self.stream_name, self.consumer_group, self.consumer_name
+            ):
+                event = WorldStateCommittedEvent.model_validate(event_data)
+                self.event_buffer.append(event)
+
+                if len(self.event_buffer) >= self.buffer_threshold:
+                    self._process_buffer()
+
+        except asyncio.CancelledError:
+            print("Memory Consolidator worker stopped.")
+        finally:
+            self._process_buffer()  # Process any remaining events
+            await self.event_bus.disconnect()
 
 if __name__ == "__main__":
     # Example of how to run the worker
     # This would typically be managed by a process manager
-    bus = EventBus()
-    consolidator = MemoryConsolidator(event_bus=bus)
-    consolidator.run()
+    async def main():
+        bus = EventBus()
+        consolidator = MemoryConsolidator(event_bus=bus)
+        await consolidator.run()
+
+    asyncio.run(main())

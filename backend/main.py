@@ -2,10 +2,14 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from prometheus_client import Counter, make_asgi_app
 import asyncio
+from typing import List
+from pydantic import BaseModel
 from scrai_core.core.logging_config import setup_logging
 from scrai_core.core.persistence import get_session
 from scrai_core.core.db_init import init_db
 from scrai_core.agents.models import Agent, EpisodicMemory
+from scrai_core.world.models import WorldObject
+from scrai_core.agents.schemas import Agent as AgentSchema, EpisodicMemory as EpisodicMemorySchema
 from scrai_core.events.bus import EventBus
 from scrai_core.world.systems import WorldStateSystem
 from scrai_core.agents.memory_consolidator import MemoryConsolidator
@@ -82,7 +86,11 @@ async def startup_event():
 def read_root():
     return FileResponse("frontend/index.html")
 
-@app.get("/api/dashboard")
+class DashboardData(BaseModel):
+    agents: List[AgentSchema]
+    memories: List[EpisodicMemorySchema]
+
+@app.get("/api/dashboard", response_model=DashboardData)
 def get_dashboard_data():
     session = next(get_session())
     try:
@@ -110,6 +118,34 @@ async def tick_simulation():
     logger.info("Manual simulation tick requested.")
     MANUAL_TICK.set()
     return {"status": "tick requested"}
+
+@app.post("/api/simulation/reset")
+async def reset_simulation():
+    """Resets the simulation state."""
+    global SIMULATION_INSTANCE
+    logger.info("Resetting simulation state...")
+    
+    session = next(get_session())
+    try:
+        # Clear all state-related tables
+        session.query(EpisodicMemory).delete()
+        session.query(Agent).delete()
+        session.query(WorldObject).delete()
+        session.commit()
+        logger.info("Cleared database tables.")
+        
+        # Re-initialize the simulation
+        if SIMULATION_INSTANCE:
+            SIMULATION_INSTANCE.load_agents()
+            logger.info("Reloaded agents and scenarios.")
+        
+        return {"status": "reset"}
+    except Exception as e:
+        session.rollback()
+        logger.error("Failed to reset simulation", error=e)
+        return {"status": "error", "detail": str(e)}
+    finally:
+        session.close()
 
 # Add Prometheus metrics endpoint
 metrics_app = make_asgi_app()

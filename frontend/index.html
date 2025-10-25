@@ -26,6 +26,7 @@
 </head>
 <body>
     <h1>ScrAI Admin</h1>
+    <button onclick="resetSimulation()">Reset Simulation</button>
     <div id="world"></div>
     <h2>Latest Memories</h2>
     <ul id="memories"></ul>
@@ -57,6 +58,11 @@
 
         setInterval(fetchData, 2000);
         fetchData();
+
+        async function resetSimulation() {
+            await fetch('/api/simulation/reset', { method: 'POST' });
+            fetchData(); // Refresh data after reset
+        }
     </script>
 </body>
 </html>

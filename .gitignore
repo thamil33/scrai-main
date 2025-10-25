@@ -82,7 +82,6 @@ Thumbs.db
 /backend/redis-windows
 factory.env
 .env.local
-.env.*
 .env
 
 # Ignore frontend build
