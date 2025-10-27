@@ -41,7 +41,7 @@ async def test_reflection(mock_get_chat_model, setup_database):
     mock_get_chat_model.return_value = llm_stub
 
     # 1. Create an agent and some memories
-    agent = Agent(name="TestAgent", position="0,0")
+    agent = Agent(name="TestAgent", latitude=0.0, longitude=0.0)
     session.add(agent)
     session.commit()
 

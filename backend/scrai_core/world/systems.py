@@ -38,13 +38,15 @@ class WorldStateSystem:
                     logger.warning("Agent not found", agent_id=action_event.entity_id)
                     return
 
-                previous_state = {"position": agent.position}
+                previous_state = {"latitude": agent.latitude, "longitude": agent.longitude}
                 
                 if action_event.action_type == "move":
-                    new_position = action_event.payload.get("new_position")
-                    if new_position:
-                        agent.position = new_position
-                        logger.info("Agent moved", agent_id=agent.id, new_position=new_position)
+                    new_latitude = action_event.payload.get("new_latitude")
+                    new_longitude = action_event.payload.get("new_longitude")
+                    if new_latitude is not None and new_longitude is not None:
+                        agent.latitude = new_latitude
+                        agent.longitude = new_longitude
+                        logger.info("Agent moved", agent_id=agent.id, new_latitude=new_latitude, new_longitude=new_longitude)
                 
                 elif action_event.action_type == "interact_with_object":
                     object_id = action_event.payload.get("object_id")
@@ -57,7 +59,7 @@ class WorldStateSystem:
 
                 db.commit()
                 db.refresh(agent)
-                new_state = {"position": agent.position}
+                new_state = {"latitude": agent.latitude, "longitude": agent.longitude}
                 logger.info("Committed state change", agent_id=agent.id)
 
                 # Create and publish the committed event

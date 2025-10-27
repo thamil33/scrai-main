@@ -47,8 +47,8 @@ async def main():
     
     # Create a sample agent for the simulation
     db = next(get_session())
-    create_agent(db, name="SimAgent1", position="0,0")
-    create_agent(db, name="SimAgent2", position="5,5")
+    create_agent(db, name="SimAgent1", latitude=0.0, longitude=0.0)
+    create_agent(db, name="SimAgent2", latitude=5.0, longitude=5.0)
     db.close()
 
     # Run simulation

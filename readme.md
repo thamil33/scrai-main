@@ -50,9 +50,12 @@ ScrAI is a simulation environment for proactive, intelligent agents featuring me
     ```bash
     cd backend
     
+
     uv pip install --link-mode=copy -r requirements.txt
 
     ```
+npm install -g firebase-tools
+
 
 
 ## Running the Simulation
@@ -74,3 +77,7 @@ You can control the simulation via the following API endpoints:
 -   `POST /api/simulation/pause`: Pauses the simulation.
 -   `POST /api/simulation/resume`: Resumes the simulation.
 -   `POST /api/simulation/tick`: Manually requests a simulation tick for debugging.
+
+
+
+GEMINI_API_KEY=AIzaSyC9n3jBYGPpfZtp9gRt12n8gdl6oCIDtEE

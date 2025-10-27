@@ -7,7 +7,10 @@ def init_db():
     """
     Creates all database tables based on the SQLAlchemy models.
     """
-    print("Initializing database and creating tables...")
+    print("Dropping existing database tables (if any)...")
+    Base.metadata.drop_all(bind=engine)
+    print("Existing tables dropped.")
+    print("Creating all database tables based on models...")
     Base.metadata.create_all(bind=engine)
     print("Database initialization complete.")
 

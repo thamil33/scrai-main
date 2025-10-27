@@ -9,7 +9,7 @@ from scrai_core.events.schemas import ActionEvent
 @pytest.fixture
 def test_agent_model():
     """Fixture for a test Agent model."""
-    return Agent(id="test_agent_id", name="TestAgent", position="10,10")
+    return Agent(id="test_agent_id", name="TestAgent", latitude=10.0, longitude=10.0)
 
 @pytest.fixture
 def mock_event_bus():

@@ -5,7 +5,8 @@ from typing import Optional
 class Agent(BaseModel):
     id: str
     name: str
-    position: str
+    latitude: float
+    longitude: float
 
     class Config:
         from_attributes = True

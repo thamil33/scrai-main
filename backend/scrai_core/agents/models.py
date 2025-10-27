@@ -3,26 +3,27 @@ from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import VECTOR
 from scrai_core.core.persistence import Base
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, UTC
 
 class Agent(Base):
     __tablename__ = "agents"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     name = Column(String, nullable=False)
-    position = Column(String, nullable=False) # This could be a more complex type later
+    latitude = Column(Float, nullable=False, default=0.0)
+    longitude = Column(Float, nullable=False, default=0.0)
 
     episodic_memories = relationship("EpisodicMemory", back_populates="agent", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Agent(id='{self.id}', name='{self.name}', position='{self.position}')>"
+        return f"<Agent(id='{self.id}', name='{self.name}', latitude={self.latitude}, longitude={self.longitude})>"
 
 class EpisodicMemory(Base):
     __tablename__ = "episodic_memories"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     agent_id = Column(String, ForeignKey("agents.id"), nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
     content = Column(Text, nullable=False)
     event_type = Column(String, nullable=True)
     salience_score = Column(Float, nullable=True)

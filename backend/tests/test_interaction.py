@@ -11,7 +11,7 @@ from scrai_core.core.persistence import get_session
 
 @pytest.fixture
 def test_agent_model():
-    return Agent(id="test_agent_id", name="TestAgent", position="10,10")
+    return Agent(id="test_agent_id", name="TestAgent", latitude=10.0, longitude=10.0)
 
 @pytest.fixture
 def test_world_object():

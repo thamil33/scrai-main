@@ -51,11 +51,11 @@ async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: Ev
             return MagicMock(content=self.response_content)
 
     # Use stub instead of mock to avoid actual API calls
-    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_position": "10,10"}}')
+    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_latitude": 10.0, "new_longitude": 10.0}}')
     mock_get_chat_model.return_value = llm_stub
 
     # 1. Setup: Create a test agent
-    test_agent = Agent(name="TestAgent", position="0,0")
+    test_agent = Agent(name="TestAgent", latitude=0.0, longitude=0.0)
     db_session.add(test_agent)
     db_session.commit()
     db_session.refresh(test_agent)
@@ -76,7 +76,7 @@ async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: Ev
         entity_id=agent_id,
         sequence=1,
         action_type="move",
-        payload={"new_position": "10,10"}
+        payload={"new_latitude": 10.0, "new_longitude": 10.0}
     )
     await event_bus.publish("action_events", action_event.model_dump(mode='json'))
 
@@ -85,7 +85,8 @@ async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: Ev
 
     # Assert DB state changed
     updated_agent = db_session.query(Agent).filter(Agent.id == agent_id).one()
-    assert updated_agent.position == "10,10"
+    assert updated_agent.latitude == 10.0
+    assert updated_agent.longitude == 10.0
 
     # Assert WorldStateCommittedEvent was received by MemorySystem
     # (In a real test, we'd check logs or a mock. For now, we'll check the stream)
@@ -94,7 +95,8 @@ async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: Ev
     assert len(messages) == 1
     committed_event_data = json.loads(messages[0][1]['data'])
     assert committed_event_data['entity_id'] == agent_id
-    assert committed_event_data['new_state']['position'] == "10,10"
+    assert committed_event_data['new_state']['latitude'] == 10.0
+    assert committed_event_data['new_state']['longitude'] == 10.0
 
     # 5. Test Idempotency
     # Publish the same event again
@@ -105,7 +107,8 @@ async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: Ev
     # by the current implementation. A more robust system would check event_id in a cache.
     # For now, we just ensure no errors occur.
     final_agent = db_session.query(Agent).filter(Agent.id == agent_id).one()
-    assert final_agent.position == "10,10" # Still "10,10"
+    assert final_agent.latitude == 10.0 # Still 10.0
+    assert final_agent.longitude == 10.0 # Still 10.0
 
     # 6. Cleanup
     world_consumer_task.cancel()

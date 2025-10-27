@@ -81,8 +81,28 @@ async def run_systems():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize DB and start the background simulation systems."""
+    """Initialize DB, create initial agents, and start the background simulation systems."""
     init_db()
+    
+    # Create initial agents if none exist
+    session = next(get_session())
+    try:
+        if session.query(Agent).count() == 0:
+            # Directly create Agent objects using the session
+            initial_agents = [
+                Agent(name="Explorer", latitude=34.0522, longitude=-118.2437), # Los Angeles
+                Agent(name="Gatherer", latitude=40.7128, longitude=-74.0060), # New York
+                Agent(name="Builder", latitude=-33.8688, longitude=151.2093)  # Sydney
+            ]
+            session.add_all(initial_agents)
+            session.commit()
+            logger.info("Created initial agents for the simulation.")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Failed to create initial agents: {e}")
+    finally:
+        session.close()
+
     asyncio.create_task(run_systems())
 
 # --- Routes ---

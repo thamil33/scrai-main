@@ -12,7 +12,7 @@ def test_agent():
     """Fixture to create a test agent and clean up after."""
     session = next(get_session())
     try:
-        agent = Agent(name="TestAgent", position="0,0")
+        agent = Agent(name="TestAgent", latitude=0.0, longitude=0.0)
         session.add(agent)
         session.commit()
         session.refresh(agent)

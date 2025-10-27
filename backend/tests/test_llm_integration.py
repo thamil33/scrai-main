@@ -51,7 +51,7 @@ async def test_cognitive_agent_with_real_llm():
         pytest.skip("No LLM provider configured - skipping integration test")
 
     # Create a mock agent and event bus
-    test_agent = Agent(id="test_llm_agent", name="TestLLMAgent", position="0,0")
+    test_agent = Agent(id="test_llm_agent", name="TestLLMAgent", latitude=0.0, longitude=0.0)
     event_bus = EventBus()
 
     # Create cognitive agent (this will use real LLM)

@@ -38,11 +38,11 @@ async def test_rag_loop(mock_get_chat_model, setup_database):
             return MagicMock(content=self.response_content)
 
     # Use stub instead of mock to avoid actual API calls
-    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_position": "10,10"}}')
+    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_latitude": 10.0, "new_longitude": 10.0}}')
     mock_get_chat_model.return_value = llm_stub
 
     # 1. Create an agent and a memory
-    agent = Agent(name="TestAgent", position="0,0")
+    agent = Agent(name="TestAgent", latitude=0.0, longitude=0.0)
     session.add(agent)
     session.commit()
 
@@ -72,7 +72,7 @@ async def test_rag_loop(mock_get_chat_model, setup_database):
         "relevant_memories": [],
         "nearby_objects": [],
         "nearby_agents": [],
-        "environmental_context": f"Agent is at position {agent.position}. There are 0 objects and 0 other agents in the environment.",
+        "environmental_context": f"Agent is at latitude {agent.latitude}, longitude {agent.longitude}. There are 0 objects and 0 other agents in the environment.",
         "next_action": None
     }
 

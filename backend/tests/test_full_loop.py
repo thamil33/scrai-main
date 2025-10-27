@@ -52,11 +52,11 @@ async def test_full_simulation_loop(mock_get_chat_model, mock_get_session, db_se
             return MagicMock(content=self.response_content)
 
     # Use stub instead of mock to avoid actual API calls
-    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_position": "5,5"}}')
+    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_latitude": 5.0, "new_longitude": 5.0}}')
     mock_get_chat_model.return_value = llm_stub
 
     # 1. Setup: Create a test agent using the scenario loader
-    test_agent = create_agent(db_session, name="FullLoopAgent", position="start")
+    test_agent = create_agent(db_session, name="FullLoopAgent", latitude=0.0, longitude=0.0)
     agent_id = test_agent.id
 
     # 2. Start the WorldStateSystem consumer
@@ -76,7 +76,8 @@ async def test_full_simulation_loop(mock_get_chat_model, mock_get_session, db_se
     updated_agent = db_session.query(Agent).filter(Agent.id == agent_id).one()
     # Note: The exact position will depend on the LLM's response,
     # so we just check that it's not the starting position.
-    assert updated_agent.position != "start"
+    assert updated_agent.latitude == 5.0
+    assert updated_agent.longitude == 5.0
 
     # 5. Cleanup
     consumer_task.cancel()

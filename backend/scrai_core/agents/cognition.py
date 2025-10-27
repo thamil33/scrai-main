@@ -80,7 +80,7 @@ class CognitiveAgent:
             # Get nearby agents (all agents for now)
             nearby_agents = session.query(Agent).filter(Agent.id != self.agent_model.id).all()
             # Generate environmental context
-            environmental_context = f"Agent is at position {agent_model.position}. There are {len(nearby_objects)} objects and {len(nearby_agents)} other agents in the environment."
+            environmental_context = f"Agent is at latitude {agent_model.latitude}, longitude {agent_model.longitude}. There are {len(nearby_objects)} objects and {len(nearby_agents)} other agents in the environment."
         finally:
             session.close()
 
@@ -97,7 +97,7 @@ class CognitiveAgent:
         print(f"Agent {self.agent_model.name}: Recalling...")
         
         # Create a query string from the current perception
-        perception_summary = f"Current position: {state['agent_model'].position}. Nearby objects: {len(state['nearby_objects'])}."
+        perception_summary = f"Current position: latitude {state['agent_model'].latitude}, longitude {state['agent_model'].longitude}. Nearby objects: {len(state['nearby_objects'])}."
         query_embedding = self.embedding_model.encode(perception_summary)
         
         relevant_memories = get_relevant_memories(self.agent_model.id, query_embedding)
@@ -151,18 +151,18 @@ class CognitiveAgent:
         """Uses an LLM to decide the next action."""
         print(f"Agent {self.agent_model.name}: Reasoning...")
         
-        objects_prompt = "\n".join([f"- Object ID: {obj.id}, Type: {obj.object_type}, Position: {obj.position}" for obj in state["nearby_objects"]])
+        objects_prompt = "\n".join([f"- Object ID: {obj.id}, Type: {obj.object_type}, Latitude: {obj.latitude}, Longitude: {obj.longitude}" for obj in state["nearby_objects"]])
         
         # Generate a random example position to avoid biasing the LLM
-        random_x = random.randint(1, 50)
-        random_y = random.randint(1, 50)
+        random_lat = round(random.uniform(-90, 90), 4)
+        random_lng = round(random.uniform(-180, 180), 4)
         
-        agents_prompt = "\n".join([f"- Agent ID: {agent.id}, Name: {agent.name}, Position: {agent.position}" for agent in state.get("nearby_agents", [])])
+        agents_prompt = "\n".join([f"- Agent ID: {agent.id}, Name: {agent.name}, Latitude: {agent.latitude}, Longitude: {agent.longitude}" for agent in state.get("nearby_agents", [])])
 
         prompt = f"""
         You are Agent {state['agent_model'].name}.
         The environmental context is: {state['environmental_context']}
-        Your current position is {state['agent_model'].position}.
+        Your current position is latitude {state['agent_model'].latitude}, longitude {state['agent_model'].longitude}.
         Your relevant memories are: {state['relevant_memories']}.
         Nearby objects are:
         {objects_prompt}
@@ -171,7 +171,7 @@ class CognitiveAgent:
 
         What is your next logical action? Consider your memories. If there are other agents nearby, communication is a good option. Your response must be a JSON object representing an ActionEvent. You can "move", "interact_with_object", or "communicate".
 
-        Example for moving: {{"action_type": "move", "payload": {{"new_position": "{random_x},{random_y}"}}}}
+        Example for moving: {{"action_type": "move", "payload": {{"new_latitude": {random_lat}, "new_longitude": {random_lng}}}}}
         Example for interacting: {{"action_type": "interact_with_object", "payload": {{"object_id": "some_object_id"}}}}
         Example for communicating: {{"action_type": "communicate", "payload": {{"recipient_id": "some_agent_id", "message": "Hello there!"}}}}
         """
