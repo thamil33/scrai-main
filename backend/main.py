@@ -2,7 +2,7 @@ import sys
 import os
 import asyncio
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
 from prometheus_client import Counter
@@ -81,39 +81,21 @@ async def run_systems():
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize DB, create initial agents, and start the background simulation systems."""
+    """Initialize DB and start the background simulation systems."""
     init_db()
-    
-    # Create initial agents if none exist
-    session = next(get_session())
-    try:
-        if session.query(Agent).count() == 0:
-            # Directly create Agent objects using the session
-            initial_agents = [
-                Agent(name="Explorer", latitude=34.0522, longitude=-118.2437), # Los Angeles
-                Agent(name="Gatherer", latitude=40.7128, longitude=-74.0060), # New York
-                Agent(name="Builder", latitude=-33.8688, longitude=151.2093)  # Sydney
-            ]
-            session.add_all(initial_agents)
-            session.commit()
-            logger.info("Created initial agents for the simulation.")
-    except Exception as e:
-        session.rollback()
-        logger.error(f"Failed to create initial agents: {e}")
-    finally:
-        session.close()
-
     asyncio.create_task(run_systems())
 
-# --- Routes ---
-@app.get("/")
-def read_root():
-    return FileResponse("frontend/index.html")
-
+# --- API Models ---
 class DashboardData(BaseModel):
     agents: List[AgentSchema]
     memories: List[EpisodicMemorySchema]
 
+class CreateAgentRequest(BaseModel):
+    name: str
+    latitude: float
+    longitude: float
+
+# --- Routes ---
 @app.get("/api/dashboard", response_model=DashboardData)
 def get_dashboard_data():
     session = next(get_session())
@@ -121,6 +103,35 @@ def get_dashboard_data():
         agents = session.query(Agent).all()
         memories = session.query(EpisodicMemory).order_by(EpisodicMemory.timestamp.desc()).limit(20).all()
         return {"agents": agents, "memories": memories}
+    finally:
+        session.close()
+
+@app.post("/api/agents", response_model=AgentSchema, status_code=201)
+def create_agent(agent_data: CreateAgentRequest):
+    """Creates a new agent and adds it to the simulation."""
+    session = next(get_session())
+    try:
+        new_agent = Agent(
+            name=agent_data.name,
+            latitude=agent_data.latitude,
+            longitude=agent_data.longitude
+        )
+        session.add(new_agent)
+        session.commit()
+        session.refresh(new_agent)
+        
+        logger.info("Created new agent", agent_name=new_agent.name, agent_id=new_agent.id)
+        
+        # Reload agents in the running simulation instance
+        if SIMULATION_INSTANCE:
+            SIMULATION_INSTANCE.load_agents()
+            logger.info("Reloaded simulation agents.")
+        
+        return new_agent
+    except Exception as e:
+        session.rollback()
+        logger.error("Failed to create agent", error=e)
+        raise HTTPException(status_code=500, detail="Failed to create agent in the database.")
     finally:
         session.close()
 
@@ -145,7 +156,7 @@ async def tick_simulation():
 
 @app.post("/api/simulation/reset")
 async def reset_simulation():
-    """Resets the simulation state."""
+    """Resets the simulation state by clearing all agents, memories, and objects."""
     global SIMULATION_INSTANCE
     logger.info("Resetting simulation state...")
     
@@ -167,7 +178,7 @@ async def reset_simulation():
     except Exception as e:
         session.rollback()
         logger.error("Failed to reset simulation", error=e)
-        return {"status": "error", "detail": str(e)}
+        raise HTTPException(status_code=500, detail="Failed to reset the simulation.")
     finally:
         session.close()
 

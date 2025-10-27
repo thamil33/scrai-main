@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import MapComponent from './MapComponent';
 
-// Temporary interfaces, we'll refine these later
+// Let's keep using 'any' for now to stay focused on the map integration.
+// We can come back and tighten up these types later.
 interface Agent {
   [key: string]: any;
 }
@@ -43,21 +45,19 @@ const Dashboard: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Dashboard</h1>
+    <div style={{ fontFamily: 'Arial, sans-serif' }}>
+      <h1>scrAI Dashboard</h1>
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
       {data ? (
         <div>
-          <h2>Agents</h2>
-          <ul>
-            {data.agents.map((agent, index) => (
-              <li key={index}>{JSON.stringify(agent, null, 2)}</li>
-            ))}
-          </ul>
-          <h2>Recent Memories</h2>
-          <ul>
+          <h2>Agent Locations</h2>
+          <MapComponent agents={data.agents} />
+          <h2 style={{ marginTop: '20px' }}>Recent Memories</h2>
+          <ul style={{ listStyleType: 'none', padding: 0 }}>
             {data.memories.map((memory, index) => (
-              <li key={index}>{JSON.stringify(memory, null, 2)}</li>
+              <li key={index} style={{ background: '#f0f0f0', margin: '5px 0', padding: '10px', borderRadius: '5px' }}>
+                <strong>Agent {memory.agent_id}:</strong> {memory.description}
+              </li>
             ))}
           </ul>
         </div>
