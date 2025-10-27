@@ -1,6 +1,7 @@
 # Scrai .gitignore
 .idx
 docker-compose.yml
+pyproject.toml.bak
 
 .examples
 # Byte-compiled / optimized / DLL files

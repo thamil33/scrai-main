@@ -7,6 +7,12 @@ This document provides instructions for running the scrAI project within the pre
 This cloud environment is pre-configured to run the entire scrAI simulation. The necessary services (PostgreSQL, Redis, Docker) and packages (Node.js) are automatically managed.
 
 ### 1. Start the Backend Services
+    cd backend
+    
+
+    uv pip install --link-mode=copy -r requirements.txt
+    pip install -r requirements.txt
+
 
 The backend, database, and Redis are all managed by Docker Compose. To start everything, run the following command from the project's root directory:
 

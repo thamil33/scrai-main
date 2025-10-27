@@ -10,6 +10,8 @@
 
   # Additional environment setup can go here
   packages = [
+    pkgs.python312Full
     pkgs.nodejs_20 # Specify Node.js version 20.x
+    pkgs.poetry # Add Poetry to the environment
   ];
 }
