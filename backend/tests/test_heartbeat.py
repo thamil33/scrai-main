@@ -62,7 +62,7 @@ async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: Ev
     agent_id = test_agent.id
 
     # 2. Start consumers in the background
-    world_system = WorldStateSystem(event_bus, session_factory=lambda: db_session)
+    world_system = WorldStateSystem(event_bus, session_factory=lambda: iter([db_session]))
     memory_system = MemorySystem(event_bus)
 
     world_consumer_task = asyncio.create_task(world_system.run_consumer())

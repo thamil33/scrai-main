@@ -60,7 +60,7 @@ async def test_full_simulation_loop(mock_get_chat_model, mock_get_session, db_se
     agent_id = test_agent.id
 
     # 2. Start the WorldStateSystem consumer
-    world_system = WorldStateSystem(event_bus, session_factory=lambda: db_session)
+    world_system = WorldStateSystem(event_bus, session_factory=lambda: iter([db_session]))
     consumer_task = asyncio.create_task(world_system.run_consumer())
     await asyncio.sleep(0.5)
 
