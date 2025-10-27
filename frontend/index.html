@@ -1,97 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScrAI Admin</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
-        h1 { margin: 10px; }
-        button { margin: 10px; padding: 8px 15px; }
-        #map {
-            height: 600px; /* Increased height for better map visibility */
-            width: 100%;
-            border: 1px solid black;
-            margin-bottom: 20px;
-        }
-        #memories {
-            margin: 10px;
-            overflow-y: auto;
-            flex-grow: 1;
-        }
-    </style>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDWnkzQzFbLp61C2HUwrvO9iZGly4q5wWI&callback=initMap"></script>
-</head>
-<body>
-    <h1>ScrAI Admin</h1>
-    <button onclick="resetSimulation()">Reset Simulation</button>
-    <div id="map"></div>
-    <h2>Latest Memories</h2>
-    <ul id="memories"></ul>
-
-    <script>
-        let map;
-        let markers = {}; // To store Google Maps markers for agents
-
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 0, lng: 0 }, // Default center, will be updated by agent data
-                zoom: 2,
-            });
-            // Initial fetch after map is ready
-            fetchData();
-        }
-
-        async function fetchData() {
-            const response = await fetch('/api/dashboard');
-            const data = await response.json();
-
-            // Clear existing markers
-            for (const agentId in markers) {
-                markers[agentId].setMap(null);
-            }
-            markers = {};
-
-            // Add new markers for agents
-            data.agents.forEach(agent => {
-                const agentPosition = { lat: agent.latitude, lng: agent.longitude };
-
-                const marker = new google.maps.Marker({
-                    position: agentPosition,
-                    map: map,
-                    title: `Agent ${agent.id}`,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: 5,
-                        fillColor: 'blue',
-                        fillOpacity: 1,
-                        strokeWeight: 0
-                    }
-                });
-                markers[agent.id] = marker;
-            });
-
-            // Optionally, center the map on the first agent or average position
-            if (data.agents.length > 0) {
-                map.setCenter({ lat: data.agents[0].latitude, lng: data.agents[0].longitude });
-            }
-
-
-            const memoriesList = document.getElementById('memories');
-            memoriesList.innerHTML = '';
-            data.memories.forEach(memory => {
-                const li = document.createElement('li');
-                li.textContent = `[${memory.timestamp}] Agent ${memory.id}: ${memory.content}`;
-                memoriesList.appendChild(li);
-            });
-        }
-
-        setInterval(fetchData, 2000);
-
-        async function resetSimulation() {
-            await fetch('/api/simulation/reset', { method: 'POST' });
-            fetchData(); // Refresh data after reset
-        }
-    </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
