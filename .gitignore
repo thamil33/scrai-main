@@ -1,6 +1,6 @@
 # Scrai .gitignore
 .idx
-
+docker-compose.yml
 
 .examples
 # Byte-compiled / optimized / DLL files
