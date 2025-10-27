@@ -1,13 +1,10 @@
 import React from 'react';
-import Simulation from './Simulation';
-import Log from './Log';
+import Dashboard from './Dashboard';
 
 const App: React.FC = () => {
   return (
     <div>
-      <h1>scrAI Simulation</h1>
-      <Simulation />
-      <Log />
+      <Dashboard />
     </div>
   );
 };
