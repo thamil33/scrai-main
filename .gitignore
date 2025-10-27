@@ -1,4 +1,6 @@
 # Scrai .gitignore
+.idx
+
 
 .examples
 # Byte-compiled / optimized / DLL files
