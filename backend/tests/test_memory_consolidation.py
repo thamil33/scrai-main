@@ -1,5 +1,6 @@
 import pytest
 from uuid import uuid4
+from unittest.mock import patch, MagicMock, AsyncMock
 from scrai_core.agents.models import Agent, EpisodicMemory
 from scrai_core.core.persistence import get_session
 from scrai_core.events.bus import EventBus
@@ -21,11 +22,17 @@ def test_agent():
         session.commit()
         session.close()
 
-def test_memory_consolidation(test_agent):
+@patch("scrai_core.agents.memory_consolidator.SentenceTransformer")
+def test_memory_consolidation(mock_sentence_transformer, test_agent):
     """
     Tests that the MemoryConsolidator correctly processes events and
     creates memories in the database.
     """
+    # Mock the embedding model to avoid actual embedding computation
+    mock_model = MagicMock()
+    mock_model.encode.return_value = [0.1] * 384  # Mock embedding vector
+    mock_sentence_transformer.return_value = mock_model
+
     event_bus = EventBus()
     consolidator = MemoryConsolidator(event_bus=event_bus, buffer_threshold=5)
 
@@ -49,7 +56,7 @@ def test_memory_consolidation(test_agent):
         consolidator.event_buffer.append(world_state_event)
 
     # 2. Manually trigger the consolidator's processing logic for the test
-    
+
     # Process the buffer directly
     consolidator._process_buffer()
 

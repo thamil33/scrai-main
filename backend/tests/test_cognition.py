@@ -30,11 +30,11 @@ async def test_cognitive_agent_tick(mock_get_chat_model, mock_get_relevant_memor
     mock_get_session.return_value.query.return_value.filter.return_value.one.return_value = test_agent_model
     mock_get_relevant_memories.return_value = []
 
-    # Mock the LLM response from the factory
+    # Create LLM stub that returns a fixed response instead of making actual API calls
     mock_llm = MagicMock()
     mock_llm.ainvoke = AsyncMock(return_value=MagicMock(content='{"action_type": "move", "payload": {"new_position": "11,11"}}'))
     mock_get_chat_model.return_value = mock_llm
-    
+
     # Make the mocked event bus's publish method awaitable
     mock_event_bus.publish = AsyncMock(return_value=None)
 
@@ -54,11 +54,11 @@ async def test_cognitive_agent_tick(mock_get_chat_model, mock_get_relevant_memor
 
     # Ensure the action step published an event
     mock_event_bus.publish.assert_called_once()
-    
+
     # Verify the content of the published event
     published_args = mock_event_bus.publish.call_args[0]
     assert published_args[0] == "action_events"
-    
+
     # The event data is the second argument
     event_data = published_args[1]
     assert event_data['action_type'] == "move"

@@ -22,13 +22,17 @@ def tables(engine):
     # Import all models here to ensure they are registered with Base
     from scrai_core.agents.models import Agent, EpisodicMemory
     from scrai_core.world.models import WorldObject
-    
+
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         conn.commit()
-    
+
     Base.metadata.create_all(engine)
     yield
+    # Drop all tables with CASCADE to handle foreign key constraints
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS social_graph_edges CASCADE;"))
+        conn.commit()
     Base.metadata.drop_all(engine)
 
 @pytest.fixture

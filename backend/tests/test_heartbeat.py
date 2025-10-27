@@ -2,6 +2,7 @@ import pytest
 import pytest_asyncio
 import asyncio
 import json
+from unittest.mock import patch, MagicMock, AsyncMock
 from scrai_core.agents.models import Agent
 from scrai_core.core.persistence import Base
 from scrai_core.events.bus import EventBus
@@ -34,12 +35,25 @@ async def event_bus():
     yield bus
     await bus.disconnect()
 
-@pytest.mark.asyncio
-async def test_heartbeat_pipeline(db_session, event_bus: EventBus):
+@patch("scrai_core.agents.cognition.get_chat_model_from_env")
+async def test_heartbeat_pipeline(mock_get_chat_model, db_session, event_bus: EventBus):
     """
     Tests the full event consumer pipeline from ActionEvent to DB commit
     and WorldStateCommittedEvent publication.
     """
+    # Create LLM stub that returns a fixed response instead of making actual API calls
+    class LLMStub:
+        def __init__(self, response_content):
+            self.response_content = response_content
+
+        async def ainvoke(self, prompt):
+            # Return a stub response instead of making actual API call
+            return MagicMock(content=self.response_content)
+
+    # Use stub instead of mock to avoid actual API calls
+    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_position": "10,10"}}')
+    mock_get_chat_model.return_value = llm_stub
+
     # 1. Setup: Create a test agent
     test_agent = Agent(name="TestAgent", position="0,0")
     db_session.add(test_agent)
@@ -50,10 +64,10 @@ async def test_heartbeat_pipeline(db_session, event_bus: EventBus):
     # 2. Start consumers in the background
     world_system = WorldStateSystem(event_bus, session_factory=lambda: db_session)
     memory_system = MemorySystem(event_bus)
-    
+
     world_consumer_task = asyncio.create_task(world_system.run_consumer())
     memory_consumer_task = asyncio.create_task(memory_system.run_consumer())
-    
+
     # Give consumers a moment to start up
     await asyncio.sleep(0.5)
 

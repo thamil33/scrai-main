@@ -21,7 +21,7 @@ class WorldStateCommittedEvent(BaseModel):
     previous_state: Dict[str, Any]
     new_state: Dict[str, Any]
 
-ActionType = Literal["move", "interact_with_object"]
+ActionType = Literal["move", "interact_with_object", "communicate"]
 
 def create_action_event(agent_id: str, action_type: ActionType, payload: Dict[str, Any], sequence: int) -> ActionEvent:
     return ActionEvent(

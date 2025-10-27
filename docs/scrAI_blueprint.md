@@ -6,7 +6,7 @@
 ## 1. Introduction
 
 ### 1.1. Overview
-**ScrAI** (formerly *Project Chimera*) is not merely a simulation engine or a narrative sandbox. It is a **narrative laboratory**—a dynamic “what-if” engine designed for creators, researchers, and theorists who wish to witness **emergent intelligence and storytelling** unfold from first principles.  
+**ScrAI**  is not merely a simulation engine or a narrative sandbox. It is a **narrative laboratory**—a dynamic “what-if” engine designed for creators, researchers, and theorists who wish to witness **emergent intelligence and storytelling** unfold from first principles.  
 
 At its core, ScrAI is a **persistent, single-player world** where autonomous AI agents—powered by **LangGraph** and advanced LLM reasoning systems—develop, act, and evolve independently. Each agent possesses persistent memories, goals, and cognitive models, enabling them to generate believable, contextually consistent behavior and dialogue.  
 

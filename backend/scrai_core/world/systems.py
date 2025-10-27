@@ -30,7 +30,7 @@ class WorldStateSystem:
             action_event = ActionEvent.model_validate(event_data)
             logger.info("Processing ActionEvent", event_id=action_event.event_id)
 
-            db: Session = next(self.session_factory())
+            db: Session = self.session_factory()
             try:
                 # Find the agent
                 agent = db.query(Agent).filter(Agent.id == action_event.entity_id).first()
@@ -106,7 +106,7 @@ class WorldStateSystem:
 async def main():
     # Example usage
     event_bus = EventBus()
-    world_system = WorldStateSystem(event_bus, session_factory=lambda: next(get_session()))
+    world_system = WorldStateSystem(event_bus, session_factory=get_session)
     try:
         await world_system.run_consumer()
     except KeyboardInterrupt:

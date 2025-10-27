@@ -18,7 +18,7 @@ class EventBus:
     async def disconnect(self):
         """Closes the Redis connection."""
         if self._redis:
-            await self._redis.close()
+            await self._redis.aclose()
             print("Disconnected from Redis.")
 
     async def publish(self, stream_name: str, event_data: Dict[str, Any]):

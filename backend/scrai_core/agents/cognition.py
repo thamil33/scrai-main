@@ -40,6 +40,8 @@ class AgentState(TypedDict):
     memories: List[str]
     relevant_memories: List[str]
     nearby_objects: List[WorldObject]
+    nearby_agents: List[Agent]
+    environmental_context: str
     next_action: ActionEvent
 
 class CognitiveAgent:
@@ -75,13 +77,19 @@ class CognitiveAgent:
             agent_model = session.query(Agent).filter(Agent.id == self.agent_model.id).one()
             # Simple perception: get all objects for now
             nearby_objects = session.query(WorldObject).all()
+            # Get nearby agents (all agents for now)
+            nearby_agents = session.query(Agent).filter(Agent.id != self.agent_model.id).all()
+            # Generate environmental context
+            environmental_context = f"Agent is at position {agent_model.position}. There are {len(nearby_objects)} objects and {len(nearby_agents)} other agents in the environment."
         finally:
             session.close()
-        
+
         return {
             **state,
             "agent_model": agent_model,
             "nearby_objects": nearby_objects,
+            "nearby_agents": nearby_agents,
+            "environmental_context": environmental_context,
         }
     
     async def _recall(self, state: AgentState) -> AgentState:
@@ -149,17 +157,23 @@ class CognitiveAgent:
         random_x = random.randint(1, 50)
         random_y = random.randint(1, 50)
         
+        agents_prompt = "\n".join([f"- Agent ID: {agent.id}, Name: {agent.name}, Position: {agent.position}" for agent in state.get("nearby_agents", [])])
+
         prompt = f"""
         You are Agent {state['agent_model'].name}.
+        The environmental context is: {state['environmental_context']}
         Your current position is {state['agent_model'].position}.
         Your relevant memories are: {state['relevant_memories']}.
         Nearby objects are:
         {objects_prompt}
-        
-        What is your next logical action? Consider your memories, but also prioritize exploring new areas if you seem to be stuck in a loop. Your response must be a JSON object representing an ActionEvent. You can either "move" or "interact_with_object".
-        
+        Nearby agents are:
+        {agents_prompt}
+
+        What is your next logical action? Consider your memories. If there are other agents nearby, communication is a good option. Your response must be a JSON object representing an ActionEvent. You can "move", "interact_with_object", or "communicate".
+
         Example for moving: {{"action_type": "move", "payload": {{"new_position": "{random_x},{random_y}"}}}}
         Example for interacting: {{"action_type": "interact_with_object", "payload": {{"object_id": "some_object_id"}}}}
+        Example for communicating: {{"action_type": "communicate", "payload": {{"recipient_id": "some_agent_id", "message": "Hello there!"}}}}
         """
         
         response = await self.llm.ainvoke(prompt)
@@ -170,6 +184,7 @@ class CognitiveAgent:
         action_data = json.loads(action_json)
         
         next_action = ActionEvent(
+            event_id=str(uuid.uuid4()),
             entity_id=self.agent_model.id,
             sequence=0, # Placeholder
             action_type=action_data["action_type"],
@@ -191,6 +206,8 @@ class CognitiveAgent:
             "memories": [],
             "relevant_memories": [],
             "nearby_objects": [],
+            "nearby_agents": [],
+            "environmental_context": "",
             "next_action": None
         }
         await self.graph.ainvoke(initial_state)

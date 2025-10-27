@@ -31,11 +31,19 @@ async def test_agent_interacts_with_object(mock_get_chat_model, mock_get_memorie
     mock_get_session.return_value.query.return_value.all.return_value = [test_world_object]
     mock_get_memories.return_value = []
 
-    # Mock the LLM response from the factory
-    mock_llm = MagicMock()
-    mock_llm.ainvoke = AsyncMock(return_value=MagicMock(content='{"action_type": "interact_with_object", "payload": {"object_id": "test_object_id"}}'))
-    mock_get_chat_model.return_value = mock_llm
-    
+    # Create LLM stub that returns a fixed response instead of making actual API calls
+    class LLMStub:
+        def __init__(self, response_content):
+            self.response_content = response_content
+
+        async def ainvoke(self, prompt):
+            # Return a stub response instead of making actual API call
+            return MagicMock(content=self.response_content)
+
+    # Use stub instead of mock to avoid actual API calls
+    llm_stub = LLMStub('{"action_type": "interact_with_object", "payload": {"object_id": "test_object_id"}}')
+    mock_get_chat_model.return_value = llm_stub
+
     # Make the mocked event bus's publish method awaitable
     mock_event_bus.publish = AsyncMock(return_value=None)
 
@@ -46,11 +54,11 @@ async def test_agent_interacts_with_object(mock_get_chat_model, mock_get_memorie
 
     # Assert
     mock_event_bus.publish.assert_called_once()
-    
+
     # Verify the content of the published event
     published_args = mock_event_bus.publish.call_args[0]
     assert published_args[0] == "action_events"
-    
+
     # The event data is the second argument
     event_data = published_args[1]
     assert event_data['action_type'] == "interact_with_object"

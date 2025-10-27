@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 import asyncio
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, AsyncMock
 from scrai_core.agents.models import Agent
 from scrai_core.core.persistence import Base
 from scrai_core.events.bus import EventBus
@@ -33,13 +33,27 @@ async def event_bus():
 
 @pytest.mark.asyncio
 @patch("scrai_core.agents.cognition.get_session")
-async def test_full_simulation_loop(mock_get_session, db_session, event_bus: EventBus):
+@patch("scrai_core.agents.cognition.get_chat_model_from_env")
+async def test_full_simulation_loop(mock_get_chat_model, mock_get_session, db_session, event_bus: EventBus):
     """
     Tests the full end-to-end loop from agent action publication
     to world state change.
     """
     # Make the patched get_session return the test's db_session
     mock_get_session.return_value = iter([db_session])
+
+    # Create LLM stub that returns a fixed response instead of making actual API calls
+    class LLMStub:
+        def __init__(self, response_content):
+            self.response_content = response_content
+
+        async def ainvoke(self, prompt):
+            # Return a stub response instead of making actual API call
+            return MagicMock(content=self.response_content)
+
+    # Use stub instead of mock to avoid actual API calls
+    llm_stub = LLMStub('{"action_type": "move", "payload": {"new_position": "5,5"}}')
+    mock_get_chat_model.return_value = llm_stub
 
     # 1. Setup: Create a test agent using the scenario loader
     test_agent = create_agent(db_session, name="FullLoopAgent", position="start")
