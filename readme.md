@@ -46,12 +46,11 @@ ScrAI is a simulation environment for proactive, intelligent agents featuring me
     ```
 
 3.  **Install dependencies using uv:**
-    This command installs the `scrai_core` package in editable mode.
 
     ```bash
     cd backend
-
-    uv pip install --link-mode =copy -r requirements.txt
+    
+    uv pip install --link-mode=copy -r requirements.txt
 
     ```
 

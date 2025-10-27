@@ -1,7 +1,11 @@
+import sys
+import os
+import asyncio
+import structlog
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-from prometheus_client import Counter, make_asgi_app
-import asyncio
+from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
+from prometheus_client import Counter
 from typing import List
 from pydantic import BaseModel
 from scrai_core.core.logging_config import setup_logging
@@ -14,7 +18,7 @@ from scrai_core.events.bus import EventBus
 from scrai_core.world.systems import WorldStateSystem
 from scrai_core.agents.memory_consolidator import MemoryConsolidator
 from scrai_core.core.simulation import Simulation
-import structlog
+
 
 logger = structlog.get_logger(__name__)
 
@@ -148,5 +152,4 @@ async def reset_simulation():
         session.close()
 
 # Add Prometheus metrics endpoint
-metrics_app = make_asgi_app()
-app.mount("/metrics", metrics_app)
+metrics_app = PrometheusFastApiInstrumentator().instrument(app).expose(app)
